@@ -1,0 +1,17 @@
+{
+  "name": "sc-alexa",
+  "version": "1.0.0",
+  "description": "StarCitizen Alexa - Discord Bot",
+  "main": "bot.js",
+  "author": "Ngonhan2k5",
+  "dependencies": {
+    "cross-spawn": "^6.0.5",
+    "discord.js": "^11.4.2",
+    "express": "^4.16.4",
+    "nedb": "^1.8.0"
+  },
+  "scripts": {
+    "start": "node app/bot.js",
+    "dev": "supervisor app/bot.js"
+  }
+}
