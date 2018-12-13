@@ -15,25 +15,35 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 
-var sender = function (channel, msg, isDM=false){
+var sender = function (channel, msg, isDM=false, attach){
     if (typeof msg == 'string')
-      channel.send(msg.replace(isDM?(BOTNAME+' '):'','') );
+      channel.send(msg.replace(isDM?(BOTNAME+' '):'',''), attach );
   }
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
+
+  var sendPM = function (userID){
+    
+    return function(msg){
+      client.users.get(userID).send(msg);
+    }
+  }
+
+  // console.log(1111,bot)
+  var server = require('./server').start(sendPM)
 });
 
 client.on('message', msg => {
-    console.log(msg.content, msg.channel.type=='dm')
+    console.log(msg, msg.channel.type=='dm')
     // avoid message send by bots
     if (msg.author && msg.author.bot) return
 
     // Is direct message
     var isDM = msg.channel.type=='dm';
 
-    var send = function (message){
-          return sender(msg.channel, message, isDM)
+    var send = function (messagem, attach){
+          return sender(msg.channel, message, isDM, attach)
       }
 
     var cmd = 'mark',
