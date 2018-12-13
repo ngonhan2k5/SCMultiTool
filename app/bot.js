@@ -38,7 +38,8 @@ client.on('message', msg => {
 
     var cmd = 'mark',
         args = [msg.content],
-        data = {userID:msg.author.id, user:msg.author.username, send, isDM, client, d:msg},
+        //data = {userID:msg.author.id, user:msg.author.username, send, isDM, client, d:msg},
+        data = {send}
         message = msg.content
 
     //msg mention @TimeAlexa or Direct Message to bot,  DM chat have no guid_id
@@ -48,6 +49,7 @@ client.on('message', msg => {
       if (message.startsWith(BOTTAG)) args.shift()
       cmd = args[0].toLowerCase();
       args = args.splice(1);
+      
     }else if (message.startsWith('!help')) { // global help
       cmd = 'help'
       args = []
@@ -56,7 +58,7 @@ client.on('message', msg => {
     //   cmd = 'from'
     //   args = message.split('>').map((item)=> item.trim());
     // }
-    console.log(111111, cmd)
+    console.log(9999999, cmd, args)
     route(cmd, data, args) //|| route('mark', data, [message])
 });
 console.log(auth)

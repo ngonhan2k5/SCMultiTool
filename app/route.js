@@ -10,6 +10,21 @@ const FORMAT = 'LT ll',
       FORMAT_TIME = 'LT'
 
 const doAction = {
+  ping: (data)=>{
+    var {send} = data;
+    send('Pong')
+  },
+  get: function(data, url, selector){
+    const fetch = require('node-fetch');
+    fetch('https://'+url)
+    .then(res => res.text())
+    .then(body => {
+      //console.log(body)});
+      var cheerio = require('cheerio'),
+      $ = cheerio.load(body);
+      console.log($('.infobox-table.hproduct').html())
+    })
+  },
   // Register
   reg : function (data, tz, pmKey, pm=null){
     console.log(666, tz, pmKey, pm)
@@ -182,6 +197,7 @@ var utils = {
 // var sender;
 //(cmd, args, userID, user, send)
 const route = function(action, data, args){
+  console.log(8888888, [data, ...args])
   // normal actions
   if (!action.startsWith('_') && doAction[action]){
 
