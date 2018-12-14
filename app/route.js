@@ -45,7 +45,7 @@ const doAction = {
     utils.findQuery(kw, kw1.join(' '), true).then(
       function(qdocs){
         console.log(8888888888, qdocs)
-        send('Matched items: '+ qdocs.map(function(item){return item.name}).join(', '))
+        send('Matched items: '+ qdocs.map(function(item){return '>>'+item.name}).join(', '))
       }
     )
   },

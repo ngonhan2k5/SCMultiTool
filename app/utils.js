@@ -69,8 +69,9 @@ var utils = {
     },
     findQuery: function(kw, kw1, retAll=false){
         return new Promise(function(resolve, reject){
-            var keyword = (kw + kw1?(' '+kw1):'').trim().toLowerCase()
             
+            var keyword = [kw].concat(kw1).join(' ').trim()
+            console.log(8989,  kw, kw1, keyword)
             queryCache.find({ $where: function () { return this.name.toLowerCase().indexOf(keyword.toLowerCase()) > -1 }}).sort({nameLen:1}).exec( function(err, docs){
                 if (docs && docs.length){
                     console.log('Found query in cache')
@@ -95,6 +96,7 @@ var utils = {
                           reject()
                           return
                         }
+                        
                         // find use kw1
                         var matchItems = items.filter(function(it, i){
                           return kw1? it.name.toLowerCase().indexOf(keyword.toLowerCase()) > -1: !i
@@ -288,5 +290,7 @@ var utils = {
 
 module.exports = utils;
 
-const CSS = '<style>body{margin:0px;padding:3px 5px} .mw-body #toc h2,.mw-body .toc h2,body,html,input,ul.tabbernav li a {font-family: Roboto,sans-serif; font-size:1.2rem} a{color: #1565c0;text-decoration:none}body,html {-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;-ms-overflow-style: -ms-autohiding-scrollbar opacity:1;background: #f9fbfc;-webkit-font-smoothing: antialiased;-moz-osx-font-smoothing: grayscale;text-rendering: optimizeLegibility} th{font-size: 1.4em !important;}</style>',
+const CSS = '<style>body{margin:0px;padding:3px 5px} .mw-body #toc h2,.mw-body .toc h2,body,html,input,ul.tabbernav li a {font-family: Roboto,sans-serif; font-size:1.2rem} a{color: #1565c0;text-decoration:none}body,html {-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;-ms-overflow-style: -ms-autohiding-scrollbar opacity:1;background: #f9fbfc;-webkit-font-smoothing: antialiased;-moz-osx-font-smoothing: grayscale;text-rendering: optimizeLegibility} th{font-size: 1.4em !important;} .live>td:nth-child(2n):after {content: "";background: url(https://starcitizen.tools/images/7/74/Icon_live.svg) center 5px/8px auto no-repeat;width: 16px;height: 16px;margin-left: 2px;display: inline-block;}</style>',
     CSS2='<style>html,html body { background: #091017 }  html #toc,html .mwe-popups .mwe-popups-extract,html .toc,html code,html input,html select,html td.diff-lineno,html textarea { color: #ccc }  html table.infobox-table { background: #141d2a }  #mwe-popups-settings header a:hover,html table.infobox-table th { color: #c3f2ff }  html .mw-body,html table.infobox-table { color: #88a3ad }  html .cquote td { color: rgba(255,255,255,.4) }  html #p-personal ul,html .editButtons input,html .mw-ui-button html .editButtons a,html .mwe-popups,html div.vectorMenu div.menu,html select { background-color: #333 }  html ul.tabbernav li.tabberactive a:link { color: #698fcd!important }  html #p-personal a,html .boilerplate p,html .mw-search-profile-tabs div.search-types ul li.current a,html .mwe-popups>div>div.mwe-popups-timestamp-older,html .thumbcaption,html .tux-grouptab,html div.vectorMenu li a,html ul.tabbernav li a:link { color: #888!important }  html ul.tabbernav li a:hover { color: #aaa!important }  html pre,html table.mw_metadata td,html table.mw_metadata th,html table.wikitable,html table.wikitable>*>tr>td,html table.wikitable>*>tr>th { color: rgba(255,255,255,.7) }  html .mw-pt-languages,html select { border-color: #333 }  html #p-logo,html .catlinks,html .mw-changeslist-legend,html .mw-code,html .mw-editinginterface,html .navplate-table td,html .navplate-table th,html code,html div#mw-panel div.portal h3,html div.mw-warning-with-logexcerpt,html fieldset,html input,html pre,html table.mw_metadata td,html table.mw_metadata th,html table.wikitable,html table.wikitable>*>tr>td,html table.wikitable>*>tr>th,html td.diff-lineno,html textarea { border-color: #2b3d4e }  html #pt-notifications-alert .mw-echo-notifications-badge,html #pt-notifications-message .mw-echo-notifications-badge,html .mw-pt-languages { background-color: #222 }  html .infobox-table td { border-color: #1a252f }  html #infobox-table-img-bg { background-color: #88a3ad }  html #toc>ul,html #toolbar,html .infobox-table tr:hover>td,html .mw-code,html .mw-editinginterface,html .mw-search-profile-tabs,html .navplate-table tr:hover>td,html .toc,html .wikitable tr:hover>td,html code,html div.mw-warning-with-logexcerpt,html fieldset,html pre,html table.diff { background: #1a252f }  html div#mw-panel div.portal div.body ul li a:hover { background-color: rgba(255,255,255,.05) }  html .mw-wiki-logo { background-image: url(/images/9/95/Sc-tools-logo-dark.svg) }  html div#mw-panel div.portal div.body ul li a,html div#mw-panel div.portal div.body ul li a:visited,html div#mw-panel div.portal h3 { color: #2b3d4e }  html #search .oo-ui-textInputWidget [type=search] { padding-top: 10px; padding-bottom: 9px; background: #444; box-shadow: none }  html .mwe-popups.mwe-popups-image-tri:after,html .mwe-popups.mwe-popups-image-tri:before,html .mwe-popups.mwe-popups-no-image-tri:after,html .mwe-popups.mwe-popups-no-image-tri:before { border-bottom-color: #333 } .infobox-table table th, .infobox-table td {padding: .3em .5em!important;font-size: 1.2rem;border-top: 1px solid #eee;}</style>'
+
+
