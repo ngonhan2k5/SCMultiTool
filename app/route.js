@@ -39,56 +39,66 @@ const doAction = {
   img: function(){
     
   },
-  search: function(...args){
-    var data = args.shift()
-    
-    var kw = args.join(' ')
-    console.log(55555555, kw)
+  fact: function(data, kw, ...kw1){
+    console.log(55555555, kw, kw1)
+    var {send} = data
+    utils.findQuery(kw, kw1.join(' '), true).then(
+      function(qdocs){
+        console.log(8888888888, qdocs)
+        send('Matched items: '+ qdocs.map(function(item){return item.name}).join(', '))
+      }
+    )
+  },
+  search: function(data, kw, ...kw1){
+    //var data = args.shift()
+    //var kw = args.join(' ')
+    console.log(55555555, kw, kw1)
     var {send} = data
 
-    utils.findQuery(kw).then(
+    utils.findQuery(kw, kw1.join(' ')).then(
       function(qdoc){
         if (qdoc){
-          utils.findAsset(qdoc.url).then(
+          var pageUrl = qdoc.pageUrl
+          utils.findAsset(pageUrl).then(
             function(doc){
             
               if (doc && doc.url){
                   console.log('Found', doc)
                   if (isTest){
-                    send('Test'+' <'+qdoc.url+'>', {file:doc.url})
+                    send('Test'+' <'+ pageUrl +'>', {file:doc.url})
                   }else{
-                  const embed = new RichEmbed()
-                  .setImage('https://media.discordapp.com/attachments/514297100566265869/523040325435129886/file-486108374.png')
-                  //.setImage("http://i.imgur.com/yVpymuV.png")
+                    const embed = new RichEmbed()
+                    .setImage('https://media.discordapp.com/attachments/514297100566265869/523040325435129886/file-486108374.png')
+                    //.setImage("http://i.imgur.com/yVpymuV.png")
 
-                  console.log({embed})
-                  send(
-                      {embed}
-                  ).then(
-                      function (msg){
-                      var url = msg.attachments.values().next()
-                      console.log(3333334, url && url.value && url.value.url)
-                      }
-                  )
+                    console.log({embed})
+                    send(
+                        {embed}
+                    ).then(
+                        function (msg){
+                          let imgUrl = msg.attachments.values().next()
+                          console.log(3333334, imgUrl && imgUrl.value && imgUrl.value.url)
+                        }
+                    )
                   }
               }else{
-                  console.log('Not Found', url, utils.hashCode(url), 'indoc')
-                  utils.renderImage(url).then(
-                  function(ret){
+                  console.log('Not Found', pageUrl, utils.hashCode(pageUrl), 'indoc')
+                  utils.renderImage(pageUrl).then(
+                    function(ret){
                       send('<'+ret.url+'>', {files:[{attachment: ret.path, name: ret.path.split('/').pop()}]}).then(
-                      function (msg){
-                          console.log(3333335, msg, msg.attachments.values().next().value.proxyURL)
-                          utils.saveAsset(url, msg.attachments.values().next().value.proxyURL)
-                      }
+                        function (msg){
+                            console.log(3333335, msg, msg.attachments.values().next().value.proxyURL)
+                            utils.saveAsset(pageUrl, msg.attachments.values().next().value.proxyURL)
+                        }
                       )
-                  }
+                    }
                   )
               }
             },
             function(){}
           )
         }else{
-          
+          console.log('Nothing')
         }
       }
     )

@@ -55,13 +55,16 @@ client.on('message', msg => {
         message = msg.content
 
     //msg mention @TimeAlexa or Direct Message to bot,  DM chat have no guid_id
-    if (message.startsWith(BOTTAG) || isDM) {
+    if (message.startsWith(BOTTAG) || isDM || message.startsWith('>')) {
       args = message.split(' ');
       // if mention bot -> remove the mention from args
       if (message.startsWith(BOTTAG)) args.shift()
-      if (message.startsWith('>')) {
-        args[0] = args[0].substring(1)
+      if (message.startsWith('>>')) {
+        args[0] = args[0].substring(2)
         args.unshift('search')
+      }else if (message.startsWith('>')){
+        args[0] = args[0].substring(1)
+        args.unshift('fact')
       }
       cmd = args[0].toLowerCase();
       args = args.splice(1);
