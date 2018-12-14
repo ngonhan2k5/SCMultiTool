@@ -17,7 +17,9 @@ const client = new Discord.Client();
 
 var sender = function (channel, msg, isDM=false, attach){
     if (typeof msg == 'string')
-      channel.send(msg.replace(isDM?(BOTNAME+' '):'',''), attach );
+      return channel.send(msg.replace(isDM?(BOTNAME+' '):'',''), attach );
+    else
+      return channel.send(msg, attach );
   }
 
 client.on('ready', () => {
@@ -26,7 +28,7 @@ client.on('ready', () => {
   var sendPM = function (userID){
     
     return function(msg){
-      client.users.get(userID).send(msg);
+      return client.users.get(userID).send(msg);
     }
   }
 
@@ -35,21 +37,21 @@ client.on('ready', () => {
 });
 
 client.on('message', msg => {
-    console.log(msg, msg.channel.type=='dm')
+    // console.log(msg, msg.channel.type=='dm')
     // avoid message send by bots
     if (msg.author && msg.author.bot) return
 
     // Is direct message
     var isDM = msg.channel.type=='dm';
 
-    var send = function (messagem, attach){
+    var send = function (message, attach){
           return sender(msg.channel, message, isDM, attach)
       }
 
     var cmd = 'mark',
         args = [msg.content],
         //data = {userID:msg.author.id, user:msg.author.username, send, isDM, client, d:msg},
-        data = {send}
+        data = {send, client}
         message = msg.content
 
     //msg mention @TimeAlexa or Direct Message to bot,  DM chat have no guid_id
@@ -57,6 +59,10 @@ client.on('message', msg => {
       args = message.split(' ');
       // if mention bot -> remove the mention from args
       if (message.startsWith(BOTTAG)) args.shift()
+      if (message.startsWith('>')) {
+        args[0] = args[0].substring(1)
+        args.unshift('search')
+      }
       cmd = args[0].toLowerCase();
       args = args.splice(1);
       
