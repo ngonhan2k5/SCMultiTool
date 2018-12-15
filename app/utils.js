@@ -1,9 +1,16 @@
+const {RichEmbed } = require('discord.js');
 const fetch = require('node-fetch')
 var Datastore = require('nedb')
-var asset = new Datastore({ filename: 'db/asset.db', autoload: true });
+var assetDB = new Datastore({ filename: 'db/asset.db', autoload: true });
 var queryCache = new Datastore({ filename: 'db/query.db', autoload: true });
 const searchApi = 'https://starcitizen.tools/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=30&suggest=true&search='
+const scToolBase = 'https://starcitizen.tools'
+const logos = require('../meta.json')
 
+assetDB.ensureIndex({ fieldName: 'timestamp', expireAfterSeconds: global.isTest?60 : 24*60*60 }, function (err) {
+  // If there was an error, err is not null
+  console.log('aaaaaaaaaaaaaaa', err)
+});
 
 var utils = {
     // search: function(kw){
@@ -50,19 +57,21 @@ var utils = {
             }
           }
     },
-    saveAsset: function(key, assetUrl){
-        var item = {_id: utils.hashCode(key), url:assetUrl, timestamp: new Date().getTime()}
-        asset.update({_id: item._id}, item, { upsert: true })
+    saveAsset: function(key, asset, assetType='image'){
+        var item = {_id: utils.hashCode(key)+'_'+assetType, asset:asset, type:assetType, timestamp: new Date()}
+        assetDB.update({_id: item._id}, item, { upsert: true })
     },
-    findAsset: function(key){
+    findAsset: function(key, assetType='image'){
         return new Promise(function(resolve, reject){
-            asset.findOne({_id: utils.hashCode(key)}, function(err, doc){
-                resolve(doc)
+            assetDB.findOne({_id: utils.hashCode(key)+'_'+assetType, type:assetType}, function(err, doc){
+              console.log(666666,utils.hashCode(key), doc)
+              resolve(doc)
             })
         })
     },
     saveQuery: function(item){
       item.nameLen = item.name.length
+      item.timestamp = new Date()
       //var item = {_id: utils.hashCode(key), url:assetUrl}
       queryCache.update({name: item.name}, item, { upsert: true })
 
@@ -107,7 +116,6 @@ var utils = {
                         else{
                           var matchItem = matchItems.shift()
                           if (matchItem){
-                              // utils.saveQuery({name:json[1][0], url:url})
                               resolve(matchItem)
                           }else{
                               reject()
@@ -119,76 +127,73 @@ var utils = {
             })
         })
     },
-    renderImage: function (url){
+    fetchAsset: function (url, assetType){
         
-        return new Promise(function(resolve, reject){
-            var _url =url.startsWith('http')?url:('https://'+url)
-            var path = "public/images/file"+ utils.hashCode(_url) + ".png"
-            fetch(_url)
-            .then(res => res.text())
-            .then(body => {
-                //console.log(body)});
-                var cheerio = require('cheerio'),
-                $ = cheerio.load(body);
-                // $('.infobox-table.hproduct').find('tr').each(function(i,e){
-                //   var a = $('th,td', e).map(function(i, el){return $(el).text()})
-                //   console.log(a.get())
-                // })
+      return new Promise(function(resolve, reject){
+          var _url =url.startsWith('http')?url:('https://'+url)
+          var path = "public/images/"+ utils.hashCode(_url) + ".png"
+          fetch(_url)
+          .then(res => res.text())
+          .then(body => {
+              //console.log(body)});
+              var cheerio = require('cheerio'),
+              $ = cheerio.load(body);
 
-                // console.log($('.infobox-table.hproduct').html())
+              var table = $('.infobox-table')
 
-                var webshot = require('webshot');
-                var tableHtml = $('.infobox-table')
-                if (tableHtml.length =0 ) return
-                tableHtml = tableHtml.html().replace('/images/','https://starcitizen.tools/images/')
-                var html = '<html class="dark">{CSS}<body><table style="margin-right:5px;padding-top:0" class="infobox-table hproduct">{table}</table></body></html>'.replace('{table}', tableHtml).replace('{CSS}', CSS+CSS2)
+              if (table.length ==0 ) return // ?????
 
-                // var html = "<table><tr><td>dd</td><td>dd</td><td>dd</td><td>dd</td></tr><tr><td>dd</td><td>dd</td><td>dd</td><td>dd</td></tr><tr><td>dd</td><td>dd</td><td>dd</td><td>dd</td></tr></table>"
-                console.log(html)
-                
-                var fs = require('fs');
-                if (false && fs.existsSync(path)) {
-                    // var at =new Attachment(path, 'hello_world.png')
-                    //   send('<'+'https://'+url+'>', at)
-                    //utils.sendImage(send, path)
-                    resolve({path, url: _url})
-                }else{
-                    var option = { 
-                        screenSize: {
-                            width: 320
-                            , height: 200
-                        },
-                        shotSize: {
-                            width: 'all'
-                            , height: 'all'
-                        },
-                        shotOffset:{
-                            right: -3,
-                            left:3
-                        },
-                        quality:85,
-                        siteType:'html'
-                    }
-                    console.log(11111111222, path)
-                    webshot(html, path, option, function(err) {
-                    // screenshot now saved to hello_world.png
-                    // const attachment = new MessageAttachment('public/hello_world.png');
-                    // send('Message that goes above image', {files: ["../hello_world.png"]});
-                    // send('ssssss')
-                    // var at =new Attachment(path, 'hello_world.png')
-                    // send('<'+'https://'+url+'>', at)
-                    //utils.sendImage(send, path)
-                        resolve({path, url: _url})
-                    
-                    });
-                }
-                // var option = {userAgent: 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_2 like Mac OS X; en-us)'
-                // + ' AppleWebKit/531.21.20 (KHTML, like Gecko) Mobile/7B298g', captureSelector:'.infobox-table.hproduct'}
-                // webshot('https://'+url, 'public/google.png', option, function(err) {
-                //   // screenshot now saved to google.png
-                // });
-            })
-        })
+              if (assetType=='image')
+                resolve(utils.assetImage(table, _url))
+              else
+                resolve (utils.assetEmbed(utils.parseAsset(table, $), _url))
+          })
+      })
+    },
+    assetImage: function(table, pageUrl){
+      var fs = require('fs');
+      var path = "public/images/"+ utils.hashCode(pageUrl) + ".png"
+      return new Promise(function(resolve, reject){
+        if (fs.existsSync(path)) {
+            // var at =new Attachment(path, 'hello_world.png')
+            //   send('<'+'https://'+url+'>', at)
+            //utils.sendImage(send, path)
+            resolve({path, url: pageUrl})
+        }else{
+          var webshot = require('webshot');
+          var option = { 
+              screenSize: {
+                  width: 320
+                  , height: 200
+              },
+              shotSize: {
+                  width: 'all'
+                  , height: 'all'
+              },
+              shotOffset:{
+                  right: -3,
+                  left:3
+              },
+              quality:75,
+              siteType:'html',
+              userAgent: 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_2 like Mac OS X; en-us'
+          }
+
+          var tableHtml = table.html().replace('/images/','https://starcitizen.tools/images/')
+          var html = '<html class="dark">{CSS}<body><table style="margin-right:5px;padding-top:0" class="infobox-table hproduct">{table}</table></body></html>'.replace('{table}', tableHtml).replace('{CSS}', CSS+CSS2)
+
+          console.log(html)
+
+          console.log(11111111222, path)
+          webshot(html, path, option, function(err) {
+          // screenshot now saved to hello_world.png
+          // const attachment = new MessageAttachment('public/hello_world.png');
+          // send('Message that goes above image', {files: ["../hello_world.png"]});
+            resolve({path, url: pageUrl})
+          
+          });
+        }
+      })
     },
     isServerOwner:(userID, channelID, bot)=>{
       return Object.values(bot.servers).find((srv)=>{
@@ -204,30 +209,35 @@ var utils = {
       return srv && srv.owner_id
     },
   
-    sendHelpShort: function(send, bot){
-      send({
+    sendHelpShort: function(send, client){
+      send({embed:{
         color: 3447003,
-        // author: {
-        //   name: client.user.username,
-        //   icon_url: client.user.avatarURL
-        // },
+        author: {
+           name: client.user.username,
+           icon_url: client.user.avatarURL,
+           url:'https://discordbots.org/bot/522068856512970752'
+        },
         title: "Help for MantleMantis",
         url: "https://discordbots.org/bot/522068856512970752",
         description: "Helper for StarCitizen game's Discord channels",
         fields: [
           {
-            name: "0. How to",
-            value: "★　\r\n"+
-                  "★　"
+            name: "1. Look up SC ingame object informartion (https://starcitizen.tools)",
+            value: "`>>keyword` for lookup object details\r\n" 
           },
-  
+          {
+            name: "2. If not found, try to find the names first",
+            value: "`>keyword` for lookup object names\r\n"
+                  
+          },
         ],
         timestamp: new Date(),
         footer: {
           // icon_url: client.user.avatarURL,
-          text: "© MantleMantis"
+          text: "© MantleMantis",
+          icon_url:'https://i.imgur.com/gHsDOmU.png'
         }
-      })
+      }})
     },
   
     token : () => {
@@ -276,16 +286,145 @@ var utils = {
       })
     },
     hashCode : function(str) {
-        var hash = 0, i, chr
-        if (str.length === 0) return hash
-        for (i = 0; i < str.length; i++) {
-            chr   = str.charCodeAt(i)
-            hash  = ((hash << 5) - hash) + chr
-            hash |= 0; // Convert to 32bit integer
+        // var hash = 0, i, chr
+        // if (str.length === 0) return hash
+        // for (i = 0; i < str.length; i++) {
+        //     chr   = str.charCodeAt(i)
+        //     hash  = ((hash << 5) - hash) + chr
+        //     hash |= 0; // Convert to 32bit integer
+        // }
+        return str.split('/').pop().replace('.png','').replace(/\W/g, '-')
+    },
+    assetEmbed: function(data, _url){
+      const e = new RichEmbed().setURL(_url).setTimestamp().setDescription("--------------------------------------------------------")
+      var title = [],
+        logo,logo2
+
+      //var item = data.shift()
+      for(var i=0; i < data.length; i++){
+        let item = data[i]
+
+        if (item.type=='img' && item.name && item.name.img){
+          e.setImage(scToolBase+item.name.img)
+        }else if (item.type=='title'){
+          //e.setTitle(item.name.text.toUpperCase())
+          title.push(item.name.text.toUpperCase())
+        }else if (item.name.text =='Manufacturer'){ // Ship and device
+          let values = item.value.text.match(/\[(.*)\]\(([^)]*)\)(.*)/)
+          if(values && values.shift() && values){
+            let name = values.shift(),
+                url = values.shift(),
+                last = values.shift(),
+                abbr = last && last.match(/\((.*)\)/)[1]
+            
+            logo = logos[name]||logos[abbr]
+
+            e.setAuthor(name+ last, logo , url)
+            
+            // e.setFooter(item.value.text,logos[name]||logos[abbr])
+            delete item
+          }
+        }else if (item.name.text =='Affiliation'|| item.name.text =='Owner'){ // Planets and moon
+          let values = item.value.text.match(/\[(.*)\]\(([^)]*)\)(.*)/)
+          if(values && values.shift() && values){
+            let name = values.shift(),
+                url = values.shift(),
+                last = values.shift(),
+                abbr = last && last.match(/\((.*)\)/)[1]
+
+            logo = logos[name]||logos[abbr]
+            e.setAuthor(name+ last, logo, url)
+            
+            // e.setFooter(item.value.text,logos[name]||logos[abbr])
+            //delete item
+          }
+        }else if (item.name.text =='Focus' || item.name.text =='Type' || item.name.text == 'System Type'){ // move focus,.. to title
+          title.push('('+item.value.text+')')
+        }else if (item.type=="prop") {
+          // if(item.value && item.value.href)
+          //   e.addField(item.name.text, "["+item.value.text+"]("+scToolBase+item.value.href+")", true)
+          // else
+
+          // if (item.name.text =='System'){ // For landmark
+          //   let values = item.value.text.match(/\[(.*)\]/)
+          //   let key = values && values.length && values[1]
+          //   logo2 = utils.findAsset(key, 'embed')
+          // }
+          e.addField(item.name.text, item.value.text, true)
         }
-        return hash
+      }
+
+      e.setTitle(title.join(' '))
+      .setFooter('©Mantis@MNE.Inc • Credit:starcitizen.tools', 'https://i.imgur.com/gHsDOmU.png')
+
+      if (logo|| logo2)
+        e.setThumbnail(logo|| logo2)
+      
+      return e
+    },
+    parseAsset:function(table, $){
+      var a = table.find('tr').map(function(i, v){
+        var trRet = {}
+        var tr = $(v).find('th, td').map(function(i, vv){
+          if (vv.attribs.class && vv.attribs.class.indexOf("infobox-table-name") > -1)
+            trRet.type = 'title'
+          else if (vv.attribs.class && vv.attribs.class.indexOf("infobox-table-img") > -1)
+            trRet.type = 'img'
+          // console.log(vv.children)
+          var ret = {}
+          var childs = vv.children.map(function(i){
+            // console.log(i)
+            
+            // if(i.type=='text') 
+            //   ret.text = (ret.text?ret.text+'\r\n':'') + i.data
+            // else 
+            if (i.type=='tag' && i.name=='a'){
+              console.log(898989,i)
+              //ret.href = i.attribs.href
+              if (i.children[0].name=='img'){
+                ret.img = i.children[0].attribs.src
+              }
+            }
+          })
+          ret.text = utils.getText(vv)
+          return ret;
+        }).get()
+
+        trRet.name = tr[0]
+        if (tr.length>1){
+          trRet.value = tr[1]
+          trRet.type=trRet.type||"prop"
+        }else
+          trRet.type=trRet.type||"group"
+          
+        return trRet
+      }).get()
+      console.log(777777777, a)
+      return a
+
+    },
+    getText:function(node, glue=' '){
+      if (Array.isArray(node)){
+        return node.map(function (child){
+                if (child.type=='text' && child.data == '2903 (before, actual)')
+                  console.log('xxxxxxx',child.parent.children)
+                return utils.getText(child)
+              }
+            ).filter(function(child){
+              //console.log('bbbb', child, child&&child!='')
+              return !!child.trim()
+            }).join(glue).replace(new RegExp(glue+'<br>'+glue,'g'),'\r\n')
+      }else{
+        if (node.type=='tag' && node.name=='img')
+          return '!['+utils.getText(node.children)+']('+scToolBase+node.attribs.src+')'
+        else if (node.type=='tag' && node.name=='a')
+          return '['+utils.getText(node.children)+']('+scToolBase+node.attribs.href+')'
+        else if(node.children && node.children.length)
+          return (node.type=='text'?node.data:'') + utils.getText(node.children, node.name=='ul'?'\r\n':' ')
+        else
+          return (node.type=='text'?node.data:(node.name=='br'?'<br>':''))
+      }
     }
-  
   }
 
 module.exports = utils;

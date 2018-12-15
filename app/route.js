@@ -11,7 +11,7 @@ console.log(454545, isTest)
 // const tokens = new Datastore({ filename: 'db/usertoken.db', autoload: true });
 // const channels = new Datastore({ filename: 'db/channels.db', autoload: true });
 
-const {Attachment, RichEmbed } = require('discord.js');
+// const {RichEmbed } = require('discord.js');
 
 
 const FORMAT = 'LT ll',
@@ -36,8 +36,20 @@ const doAction = {
       }
     )
   },
-  img: function(){
-    
+  img: function(data){
+    var pageUrl = 'https://starcitizen.tools/Hull_D'
+    utils.fetchAsset(pageUrl, false).then(
+      function(ret){
+        console.log(12121212, ret)
+        data.send(ret)
+        // send('<'+ret.url+'>', {files:[{attachment: ret.path, name: ret.path.split('/').pop()}]}).then(
+        //   function (msg){
+        //       console.log(3333335, msg, msg.attachments.values().next().value.proxyURL)
+        //       utils.saveAsset(pageUrl, msg.attachments.values().next().value.proxyURL)
+        //   }
+        // )
+      }
+    )
   },
   fact: function(data, kw, ...kw1){
     console.log(55555555, kw, kw1)
@@ -54,43 +66,41 @@ const doAction = {
     //var kw = args.join(' ')
     console.log(55555555, kw, kw1)
     var {send} = data
+    const assetType = 'embed'
 
     utils.findQuery(kw, kw1.join(' ')).then(
       function(qdoc){
+        console.log(555555,qdoc)
         if (qdoc){
           var pageUrl = qdoc.pageUrl
-          utils.findAsset(pageUrl).then(
+          utils.findAsset(pageUrl, assetType).then(
             function(doc){
-            
-              if (doc && doc.url){
+              if (doc && doc.asset){
                   console.log('Found', doc)
-                  if (isTest){
-                    send('Test'+' <'+ pageUrl +'>', {file:doc.url})
+                  if (typeof doc.asset == 'string'){
+                    send('Test'+' <'+ pageUrl +'>', {file:doc.asset})
                   }else{
-                    const embed = new RichEmbed()
-                    .setImage('https://media.discordapp.com/attachments/514297100566265869/523040325435129886/file-486108374.png')
-                    //.setImage("http://i.imgur.com/yVpymuV.png")
-
-                    console.log({embed})
-                    send(
-                        {embed}
-                    ).then(
-                        function (msg){
-                          let imgUrl = msg.attachments.values().next()
-                          console.log(3333334, imgUrl && imgUrl.value && imgUrl.value.url)
-                        }
-                    )
+                    send({embed:doc.asset})
                   }
               }else{
                   console.log('Not Found', pageUrl, utils.hashCode(pageUrl), 'indoc')
-                  utils.renderImage(pageUrl).then(
+                  utils.fetchAsset(pageUrl, assetType).then(
                     function(ret){
-                      send('<'+ret.url+'>', {files:[{attachment: ret.path, name: ret.path.split('/').pop()}]}).then(
-                        function (msg){
-                            console.log(3333335, msg, msg.attachments.values().next().value.proxyURL)
-                            utils.saveAsset(pageUrl, msg.attachments.values().next().value.proxyURL)
-                        }
-                      )
+                      console.log(2323232, ret)
+                      if(ret.title)
+                        send(ret).then(
+                          function (msg){
+                            console.log(3333335, msg)
+                            utils.saveAsset(pageUrl, ret, 'embed')
+                          }
+                        )
+                      else
+                        send('<'+ret.url+'>', {files:[{attachment: ret.path, name: ret.path && ret.path.split('/').pop()}]}).then(
+                          function (msg){
+                              console.log(3333335, msg, msg.attachments.values().next().value.proxyURL)
+                              utils.saveAsset(pageUrl, msg.attachments.values().next().value.proxyURL, 'image')
+                          }
+                        )
                     }
                   )
               }
@@ -115,10 +125,10 @@ const doAction = {
 
 
   help: function(data, detail=false){
-    var {send} = data;
+    var {send, client} = data;
     console.log('h1', send)
 
-    return detail?utils.sendHelp(send):utils.sendHelpShort(send)
+    return utils.sendHelpShort(send, client)
   },
 
   _run: function(data){
@@ -152,7 +162,7 @@ const doAction = {
   },
 
   
-  mark:(data, message)=>{
+  _mark:(data, message)=>{
     return
     // console.log('aaaaa', data)
     // return
@@ -189,7 +199,7 @@ const doAction = {
 // var sender;
 //(cmd, args, userID, user, send)
 const route = function(action, data, args){
-  console.log(8888888, [data, ...args])
+  // console.log(8888888, [data, ...args])
   // normal actions
   if (!action.startsWith('_') && doAction[action]){
 
@@ -217,8 +227,6 @@ const route = function(action, data, args){
 //   }
 //
 
-var util = require('util')
-
 const log = function(name, query, send){
   //send(global.OWNER)('['+name+'] '+JSON.stringify(query, null, '\t').substr(0,2000))
   // send(global.OWNER)('['+name+'] ' + util.inspect(query).substr(0,1000))
@@ -230,4 +238,4 @@ module.exports = {
   route:route,
 }
 
-// https://discordbots.org/bot/509269359231893516
+// https://discordbots.org/bot/522068856512970752

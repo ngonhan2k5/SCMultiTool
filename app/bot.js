@@ -10,6 +10,7 @@ const BOTID = isTest?'522068856512970752':'522068856512970752',
 
 global.OWNER = OWNER
 global.BOTID = BOTID
+global.isTest = isTest
 
 const Discord = require('discord.js');
 const client = new Discord.Client();
