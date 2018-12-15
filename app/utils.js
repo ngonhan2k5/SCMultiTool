@@ -211,7 +211,7 @@ var utils = {
   
     sendHelpShort: function(send, client){
       send({embed:{
-        color: 3447003,
+        color: 0xBACD31,
         author: {
            name: client.user.username,
            icon_url: client.user.avatarURL,
@@ -296,7 +296,7 @@ var utils = {
         return str.split('/').pop().replace('.png','').replace(/\W/g, '-')
     },
     assetEmbed: function(data, _url){
-      const e = new RichEmbed().setURL(_url).setTimestamp().setDescription("--------------------------------------------------------")
+      const e = new RichEmbed().setURL(_url).setTimestamp().setDescription("--------------------------------------------------------").setColor( 0xBACD31)
       var title = [],
         logo,logo2
 
